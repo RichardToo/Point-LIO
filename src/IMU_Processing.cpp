@@ -7,7 +7,7 @@ void ImuProcess::set_gyr_cov(const V3D & scaler) { cov_gyr_scale = scaler; }
 void ImuProcess::set_acc_cov(const V3D & scaler) { cov_vel_scale = scaler; }
 
 ImuProcess::ImuProcess()
-: b_first_frame_(true), imu_need_init_(true), logger(rclcpp::get_logger("ImuProcess"))
+: b_first_frame_(true), imu_need_init_(true), gravity_align_(false),logger(rclcpp::get_logger("ImuProcess"))
 {
   imu_en = true;
   init_iter_num = 1;
@@ -84,31 +84,34 @@ void ImuProcess::IMU_init(const MeasureGroup & meas, int & N)
   }
 }
 
-void ImuProcess::Process(const MeasureGroup & meas, PointCloudXYZI::Ptr cur_pcl_un_)
-{
+
+void ImuProcess::Process(const MeasureGroup &meas, const PointCloudXYZI::Ptr &cur_pcl_un_) {
   if (imu_en) {
     if (meas.imu.empty()) return;
+    assert(meas.lidar != nullptr);
 
     if (imu_need_init_) {
-      {
-        /// The very first lidar frame
-        IMU_init(meas, init_iter_num);
+      /// The very first lidar frame
+      IMU_init(meas, init_iter_num);
 
-        imu_need_init_ = true;
+      imu_need_init_ = true;
 
-        if (init_iter_num > MAX_INI_COUNT) {
-          RCLCPP_INFO(logger, "IMU Initializing: %.1f %%", 100.0);
-          imu_need_init_ = false;
-          *cur_pcl_un_ = *(meas.lidar);
-        }
-        // *cur_pcl_un_ = *(meas.lidar);
+      if (init_iter_num > MAX_INI_COUNT) {
+        RCLCPP_INFO(logger, "IMU Initializing: %.1f %%", 100.0);
+        imu_need_init_ = false;
+        *cur_pcl_un_ = *(meas.lidar);
       }
       return;
     }
-    if (!after_imu_init_) after_imu_init_ = true;
+    if (!gravity_align_) gravity_align_ = true;
     *cur_pcl_un_ = *(meas.lidar);
     return;
   } else {
+    if (!b_first_frame_) { if (!gravity_align_) gravity_align_ = true; }
+    else {
+      b_first_frame_ = false;
+      return;
+    }
     *cur_pcl_un_ = *(meas.lidar);
     return;
   }

@@ -36,7 +36,7 @@ public:
   ~ImuProcess();
 
   void Reset();
-  void Process(const MeasureGroup & meas, PointCloudXYZI::Ptr pcl_un_);
+  void Process(const MeasureGroup &meas, const PointCloudXYZI::Ptr &cur_pcl_un_);
   void set_gyr_cov(const V3D & scaler);
   void set_acc_cov(const V3D & scaler);
   void Set_init(Eigen::Vector3d & tmp_gravity, Eigen::Matrix3d & rot);
@@ -49,7 +49,9 @@ public:
   bool imu_need_init_ = true;
   bool after_imu_init_ = false;
   bool b_first_frame_ = true;
+  bool gravity_align_=false;
   double time_last_scan = 0.0;
+
   V3D cov_gyr_scale = V3D(0.0001, 0.0001, 0.0001);
   V3D cov_vel_scale = V3D(0.0001, 0.0001, 0.0001);
 

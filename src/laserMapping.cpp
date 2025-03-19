@@ -453,7 +453,7 @@ int main(int argc, char **argv) {
         }
         time_current = 0.0;
         if (imu_en) {
-                if (gravity_align) {
+                if (!p_imu->gravity_align_) {
                     while (Measures.lidar_beg_time > get_time_sec(imu_next.header.stamp)) {
                         imu_last = imu_next;
                         imu_next = *(imu_deque.front());
@@ -470,7 +470,7 @@ int main(int argc, char **argv) {
                         state_out.gravity = -1 * p_imu->mean_acc * G_m_s2 / acc_norm;
                         state_out.acc = p_imu->mean_acc * G_m_s2 / acc_norm;
                     }
-                    if (gravity_align) {
+                    if (true){
                         Eigen::Matrix3d rot_init;
                         p_imu->gravity_ << VEC_FROM_ARRAY(gravity);
                         p_imu->Set_init(state_in.gravity, rot_init);
@@ -484,7 +484,7 @@ int main(int argc, char **argv) {
                     kf_output.change_x(state_out);
                 }
             } else {
-                if (gravity_align) {
+                if (!p_imu->gravity_align_) {
                     state_in.gravity << VEC_FROM_ARRAY(gravity_init);
                     state_out.gravity << VEC_FROM_ARRAY(gravity_init);
                     state_out.acc << VEC_FROM_ARRAY(gravity_init);
